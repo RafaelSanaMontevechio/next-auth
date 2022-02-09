@@ -5,6 +5,7 @@ import { AuthContext } from '../Contexts/AuthContext';
 import { parseCookies } from 'nookies';
 
 import styles from '../styles/Home.module.css';
+import { withSSRGuest } from '../utils/withSSRGuest';
 
 const Home: NextPage = () => {
   const [email, setEmail] = useState('');
@@ -38,21 +39,14 @@ const Home: NextPage = () => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const cookies = parseCookies(ctx);
-
-  if (cookies['nextauth.token']) {
-    return {
-      redirect: {
-        destination: '/dashboard',
-        permanent: false,
-      },
-    };
-  }
-
+export const getServerSideProps = withSSRGuest<{
+  users: string[];
+}>(async (ctx) => {
   return {
-    props: {},
+    props: {
+      users: ['user'],
+    },
   };
-};
+});
 
 export default Home;
