@@ -4,7 +4,7 @@ import Router from 'next/router';
 
 import { setCookie, parseCookies, destroyCookie } from 'nookies'; // lib utilizada para armazenar informações no cookie do navegador
 
-import { api } from '../services/api';
+import { api } from '../services/apiClient';
 
 type User = {
   email: string;
