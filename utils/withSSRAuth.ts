@@ -6,18 +6,51 @@ import {
 import { destroyCookie, parseCookies } from 'nookies';
 import { AuthTokenError } from '../services/errors/AuthTokenError';
 
-export function withSSRAuth<P>(fn: GetServerSideProps<P>): GetServerSideProps {
+import decode from 'jwt-decode';
+import { validateUserPermissions } from './validateUserPermissions';
+
+type WithSSRAuthOptions = {
+  permissions?: string[];
+  roles?: string[];
+};
+
+export function withSSRAuth<P>(
+  fn: GetServerSideProps<P>,
+  options?: WithSSRAuthOptions,
+): GetServerSideProps {
   return async (
     ctx: GetServerSidePropsContext,
   ): Promise<GetServerSidePropsResult<P>> => {
     const cookies = parseCookies(ctx);
-    if (!cookies['nextauth.token']) {
+    const token = cookies['nextauth.token'];
+
+    if (!token) {
       return {
         redirect: {
           destination: '/',
           permanent: false,
         },
       };
+    }
+
+    if (options) {
+      const user = decode<{ permissions: string[]; roles: string[] }>(token);
+
+      const userHasValidPermission = validateUserPermissions({
+        user,
+        permissions: options?.permissions,
+        roles: options?.roles,
+      });
+
+      if (!userHasValidPermission) {
+        return {
+          // notFound: true,
+          redirect: {
+            destination: '/dashboard',
+            permanent: false,
+          },
+        };
+      }
     }
 
     try {
